@@ -21,20 +21,11 @@ export default function ProfileScreen() {
   const [bioModalVisible, setBioModalVisible] = useState(false);
   const [isBiometricSupported, setIsBiometricSupported] = useState(false);
   const [biometricEnabled, setBiometricEnabled] = useState(false);
-  const [groqApiKey, setGroqApiKey] = useState('');
 
   useEffect(() => {
     checkBiometricSupport();
     loadBiometricSetting();
-    loadGroqApiKey();
   }, []);
-
-  const loadGroqApiKey = async () => {
-    try {
-      const savedKey = await AsyncStorage.getItem('@groq_api_key');
-      if (savedKey) setGroqApiKey(savedKey);
-    } catch (e) {}
-  };
 
   const checkBiometricSupport = async () => {
     const compatible = await LocalAuthentication.hasHardwareAsync();
@@ -127,13 +118,6 @@ export default function ProfileScreen() {
       });
 
       if (error) throw error;
-      
-      // Save local Groq key securely in AsyncStorage
-      if (groqApiKey.trim()) {
-        await AsyncStorage.setItem('@groq_api_key', groqApiKey.trim());
-      } else {
-        await AsyncStorage.removeItem('@groq_api_key');
-      }
       
       const msg = 'Profiliniz başarıyla güncellendi.';
       if (Platform.OS === 'web') window.alert(msg);
@@ -243,19 +227,6 @@ export default function ProfileScreen() {
               onChangeText={setFullName}
               placeholder="Adınız ve Soyadınız"
               placeholderTextColor={isDark ? '#52525b' : '#a1a1aa'}
-            />
-          </View>
-          
-          <View style={[styles.inputGroup, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : '#fff', borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' }]}>
-            <Ionicons name="key-outline" size={20} color={isDark ? '#a1a1aa' : '#71717a'} style={styles.inputIcon} />
-            <TextInput
-              style={[styles.input, { color: isDark ? '#fff' : '#000' }, Platform.OS === 'web' && { outlineStyle: 'none' } as any]}
-              value={groqApiKey}
-              onChangeText={setGroqApiKey}
-              placeholder="Groq API Anahtarı (gsk_...)"
-              placeholderTextColor={isDark ? '#52525b' : '#a1a1aa'}
-              autoCapitalize="none"
-              autoCorrect={false}
             />
           </View>
           
