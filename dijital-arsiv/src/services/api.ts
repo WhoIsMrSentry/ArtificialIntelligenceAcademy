@@ -353,9 +353,7 @@ export const analyzeDocument = async (uri: string, filename: string, mime: strin
     const sizeInMB = (activeBase64.length * (3 / 4)) / (1024 * 1024);
     console.log(`Analiz ediliyor: ${filename}, Boyut: ${sizeInMB.toFixed(2)} MB`);
 
-    const groqUrl = Platform.OS === 'web'
-      ? 'https://corsproxy.io/?https://api.groq.com/openai/v1/chat/completions'
-      : 'https://api.groq.com/openai/v1/chat/completions';
+    const groqUrl = 'https://api.groq.com/openai/v1/chat/completions';
 
     const groqResponse = await fetch(groqUrl, {
       method: 'POST',
