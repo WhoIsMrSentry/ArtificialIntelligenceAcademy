@@ -97,6 +97,26 @@ export default function AddScreen() {
   const isDetailedCredit = selectedDocType.id === 'kredi' && ['Konut Kredisi', 'Taşıt Kredisi', 'İhtiyaç Kredisi', 'KYK Kredisi'].includes(selectedCategory);
   const isVehicleType = selectedDocType.id === 'vehicle';
 
+  const resetForm = () => {
+    setImages([]);
+    setBase64Images([]);
+    setResult(null);
+    setTitle('');
+    setAmount('');
+    setDate(new Date());
+    setFormattedDate(() => {
+      const d = new Date();
+      return `${d.getDate().toString().padStart(2, '0')}.${(d.getMonth() + 1).toString().padStart(2, '0')}.${d.getFullYear()}`;
+    });
+    setInterestRate('');
+    setMonths('');
+    setPrincipal('');
+    setFolder('');
+    setNextServiceDate(null);
+    setSelectedReminders([]);
+    setSelectedCategory(selectedDocType.categories?.[0] || 'Diğer');
+  };
+
   // Kredi Hesaplama Mantığı
   useEffect(() => {
     if (isDetailedCredit && principal && interestRate && months) {
@@ -236,6 +256,7 @@ export default function AddScreen() {
         setSelectedCategory(data.category);
       }
       if (data.currency) setCurrency(data.currency);
+      if (data.folder) setFolder(data.folder);
       setResult(data.summary);
     } catch (e) {
       console.warn("AI Analiz hatası:", e);
@@ -300,7 +321,14 @@ export default function AddScreen() {
           'Başarılı',
           'Belge kaydedildi! Bu belgeyi telefonunuzun takvimine hatırlatıcı olarak eklemek ister misiniz?',
           [
-            { text: 'Hayır', style: 'cancel', onPress: () => router.push('/') },
+            { 
+              text: 'Hayır', 
+              style: 'cancel', 
+              onPress: () => {
+                resetForm();
+                router.push('/');
+              } 
+            },
             { 
               text: 'Takvime Ekle', 
               style: 'default',
@@ -315,6 +343,7 @@ export default function AddScreen() {
                 const gCalUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encTitle}&details=${encDetails}&dates=${dateStr}/${nextDayStr}`;
                 import('react-native').then(({ Linking }) => {
                   Linking.openURL(gCalUrl).catch(() => {}).finally(() => {
+                    resetForm();
                     router.push('/');
                   });
                 });

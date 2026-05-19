@@ -105,22 +105,25 @@ export default function HomeScreen() {
         Animated.timing(pulseAnim, { toValue: 1, duration: 2000, useNativeDriver: true }),
       ])
     ).start();
+  }, []);
 
+  useEffect(() => {
+    if (!user?.id) return;
     const checkWelcome = async () => {
       try {
-        const hasSeen = await AsyncStorage.getItem('@has_seen_onboarding');
+        const hasSeen = await AsyncStorage.getItem(`@has_seen_onboarding_${user.id}`);
         if (hasSeen !== 'true') {
           setShowWelcome(true);
         }
       } catch (e) {}
     };
     checkWelcome();
-  }, []);
+  }, [user?.id]);
 
   const closeWelcome = async () => {
-    if (dontShowAgain) {
+    if (dontShowAgain && user?.id) {
       try {
-        await AsyncStorage.setItem('@has_seen_onboarding', 'true');
+        await AsyncStorage.setItem(`@has_seen_onboarding_${user.id}`, 'true');
       } catch (e) {}
     }
     setShowWelcome(false);

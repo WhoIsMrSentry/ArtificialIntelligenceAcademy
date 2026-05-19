@@ -16,6 +16,7 @@ export interface AnalysisResult {
   date: string;
   category: string;
   summary: string;
+  folder?: string;
 }
 
 export interface OCRResponse {
@@ -236,10 +237,14 @@ export const addManualRecord = async (
   const [d, m, y] = date.split('.');
   const isoDate = `${y}-${m}-${d}`;
 
+  const { data: userData } = await supabase.auth.getUser();
+  const userId = userData?.user?.id;
+
   const { error } = await supabase
     .from('invoices')
     .insert([
       {
+        user_id: userId,
         filename: title,
         amount: numericAmount,
         due_date: isoDate,
@@ -300,6 +305,7 @@ export const analyzeDocument = async (uri: string, filename: string, mime: strin
                 4. date: İşlem tarihi (GG.AA.YYYY).
                 5. category: En uygun kategori.
                 6. summary: Detaylı Türkçe özet.
+                7. folder: Belgenin içeriğine göre en uygun klasör adı (Örn: "Ev", "İş", "Kişisel", "Araç", "Eğitim", "Sağlık" vb.).
 
                 Yanıtı yalnızca JSON formatında döndür.`
               },
@@ -340,7 +346,8 @@ export const analyzeDocument = async (uri: string, filename: string, mime: strin
       currency: result.currency || "TRY",
       date: result.date || "",
       category: result.category || "",
-      summary: result.summary || ""
+      summary: result.summary || "",
+      folder: result.folder || ""
     };
   } catch (error) {
     console.error("Analiz Hatası Detayı:", error);

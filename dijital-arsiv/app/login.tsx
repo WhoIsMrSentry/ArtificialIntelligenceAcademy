@@ -144,7 +144,10 @@ export default function LoginScreen() {
     // Demo hesap otomatik dönüştürme sihri
     let loginEmail = email.trim();
     let loginPassword = password;
-    if (loginEmail.toLowerCase() === 'demo' && loginPassword === 'demo') {
+    if (
+      (loginEmail.toLowerCase() === 'demo' && loginPassword === 'demo') ||
+      (loginEmail.toLowerCase() === 'admin' && loginPassword === 'admin')
+    ) {
       loginEmail = 'demo@demo.com';
       loginPassword = 'demodemo';
     }
