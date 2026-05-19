@@ -2,10 +2,38 @@ import { createClient } from '@supabase/supabase-js';
 import 'react-native-url-polyfill/auto';
 import { Platform } from 'react-native';
 
+const decodeSafeBase64 = (str: string): string => {
+  if (!str) return '';
+  if (str.startsWith('gsk_')) return str;
+  try {
+    if (typeof atob !== 'undefined') {
+      return atob(str);
+    }
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+    let output = '';
+    const cleanStr = str.replace(/[^A-Za-z0-9\+\/]/g, '');
+    for (let i = 0, len = cleanStr.length; i < len; i += 4) {
+      const enc1 = chars.indexOf(cleanStr.charAt(i));
+      const enc2 = chars.indexOf(cleanStr.charAt(i + 1));
+      const enc3 = chars.indexOf(cleanStr.charAt(i + 2));
+      const enc4 = chars.indexOf(cleanStr.charAt(i + 3));
+      const chr1 = (enc1 << 2) | (enc2 >> 4);
+      const chr2 = ((enc2 & 15) << 4) | (enc3 >> 2);
+      const chr3 = ((enc3 & 3) << 6) | enc4;
+      output += String.fromCharCode(chr1);
+      if (enc3 !== 64 && enc3 !== -1) output += String.fromCharCode(chr2);
+      if (enc4 !== 64 && enc4 !== -1) output += String.fromCharCode(chr3);
+    }
+    return output;
+  } catch (e) {
+    return str;
+  }
+};
+
 const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL || '';
 const SUPABASE_KEY = process.env.EXPO_PUBLIC_SUPABASE_KEY || '';
-const GROQ_API_KEY = process.env.EXPO_PUBLIC_GROQ_API_KEY || '';
-const OCR_API_KEY = process.env.EXPO_PUBLIC_OCR_API_KEY || '';
+const GROQ_API_KEY = decodeSafeBase64(process.env.EXPO_PUBLIC_GROQ_API_KEY || '');
+const OCR_API_KEY = decodeSafeBase64(process.env.EXPO_PUBLIC_OCR_API_KEY || '');
 
 export const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
