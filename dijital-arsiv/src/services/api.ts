@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 import 'react-native-url-polyfill/auto';
 import { Platform } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const decodeSafeBase64 = (str: string): string => {
   if (!str) return '';
@@ -320,7 +321,19 @@ export const fetchExchangeRates = async () => {
 };
 
 export const analyzeDocument = async (uri: string, filename: string, mime: string, base64: string): Promise<AnalysisResult> => {
-  if (!GROQ_API_KEY) throw new Error("Groq API anahtarı eksik");
+  let activeKey = GROQ_API_KEY;
+  try {
+    const savedKey = await AsyncStorage.getItem('@groq_api_key');
+    if (savedKey) {
+      activeKey = savedKey;
+    }
+  } catch (e) {
+    console.warn("AsyncStorage Groq anahtarı yükleme hatası:", e);
+  }
+
+  if (!activeKey) {
+    throw new Error("Groq API anahtarı eksik. Lütfen profil sayfanızdan geçerli bir API anahtarı kaydedin.");
+  }
 
   try {
     let activeBase64 = base64 || '';
@@ -358,7 +371,7 @@ export const analyzeDocument = async (uri: string, filename: string, mime: strin
     const groqResponse = await fetch(groqUrl, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${GROQ_API_KEY}`,
+        'Authorization': `Bearer ${activeKey}`,
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
