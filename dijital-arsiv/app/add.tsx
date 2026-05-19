@@ -233,8 +233,8 @@ export default function AddScreen() {
         setResult(null); 
         
         // Yapay zeka analizi sadece ilk resim için yap (eğer önceden resim yoksa)
-        if (res.assets[0].base64 && images.length === 0) {
-          handleAIAnalysis(res.assets[0].uri, res.assets[0].fileName || 'galeri_resim.jpg', 'image/jpeg', res.assets[0].base64);
+        if (images.length === 0) {
+          handleAIAnalysis(res.assets[0].uri, res.assets[0].fileName || 'galeri_resim.jpg', 'image/jpeg', res.assets[0].base64 || '');
         }
     }
   };
@@ -276,8 +276,8 @@ export default function AddScreen() {
         setResult(null); 
         
         // Yapay zeka analizi başlat
-        if (asset.base64 && images.length === 0) {
-          handleAIAnalysis(asset.uri, 'kamera_resim.jpg', 'image/jpeg', asset.base64);
+        if (images.length === 0) {
+          handleAIAnalysis(asset.uri, 'kamera_resim.jpg', 'image/jpeg', asset.base64 || '');
         }
     }
   };
@@ -353,7 +353,7 @@ export default function AddScreen() {
         );
       };
 
-      if (images.length > 0 && base64Images.length > 0) {
+      if (images.length > 0) {
         let finalDescription = result ? `${additionalText}\n\n--- YAPAY ZEKA ÖZETİ ---\n${result}` : additionalText;
         if (folder) finalDescription += `\n[FOLDER:${folder}]`;
         if (nextServiceDate) {

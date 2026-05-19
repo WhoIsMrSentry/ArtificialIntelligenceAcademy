@@ -175,13 +175,13 @@ export const uploadInvoice = async (
   let publicUrls: string[] = [];
 
   // 1. Fotoğraf varsa Supabase Storage'a yükle
-  if (base64Images && base64Images.length > 0) {
+  if (uris && uris.length > 0) {
     console.log('1. Fotoğraf(lar) buluta (Supabase Storage) yükleniyor...');
     const { decode } = require('base64-arraybuffer');
 
-    for (let i = 0; i < base64Images.length; i++) {
-      const base64 = base64Images[i];
-      if (!base64) continue;
+    for (let i = 0; i < uris.length; i++) {
+      const uri = uris[i];
+      if (!uri) continue;
 
       // Dosya adını sanitize et
       const safeFilename = `${Date.now()}_${i}_${filename}`
@@ -195,9 +195,19 @@ export const uploadInvoice = async (
         })
         .replace(/[^a-zA-Z0-9_.-]/g, '');
 
+      let fileBody;
+      if (Platform.OS === 'web') {
+        const response = await fetch(uri);
+        fileBody = await response.blob();
+      } else {
+        const base64 = base64Images[i];
+        if (!base64) continue;
+        fileBody = decode(base64);
+      }
+
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from('invoices')
-        .upload(safeFilename, decode(base64), { contentType: mimeType, upsert: true });
+        .upload(safeFilename, fileBody, { contentType: mimeType, upsert: true });
 
       if (uploadError) throw uploadError;
 
@@ -308,11 +318,41 @@ export const analyzeDocument = async (uri: string, filename: string, mime: strin
   if (!GROQ_API_KEY) throw new Error("Groq API anahtarı eksik");
 
   try {
+    let activeBase64 = base64 || '';
+    if (!activeBase64 && uri) {
+      if (Platform.OS === 'web') {
+        try {
+          const response = await fetch(uri);
+          const blob = await response.blob();
+          activeBase64 = await new Promise<string>((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+              const base64data = reader.result as string;
+              const base64Part = base64data.split(',')[1];
+              resolve(base64Part || '');
+            };
+            reader.onerror = reject;
+            reader.readAsDataURL(blob);
+          });
+        } catch (fetchErr) {
+          console.warn("URI -> Base64 dönüştürme hatası:", fetchErr);
+        }
+      }
+    }
+
+    if (!activeBase64) {
+      throw new Error("Görsel verisi alınamadı.");
+    }
+
     // Görsel boyutunu logla (Hata ayıklama için)
-    const sizeInMB = (base64.length * (3 / 4)) / (1024 * 1024);
+    const sizeInMB = (activeBase64.length * (3 / 4)) / (1024 * 1024);
     console.log(`Analiz ediliyor: ${filename}, Boyut: ${sizeInMB.toFixed(2)} MB`);
 
-    const groqResponse = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    const groqUrl = Platform.OS === 'web'
+      ? 'https://corsproxy.io/?https://api.groq.com/openai/v1/chat/completions'
+      : 'https://api.groq.com/openai/v1/chat/completions';
+
+    const groqResponse = await fetch(groqUrl, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${GROQ_API_KEY}`,
@@ -339,7 +379,7 @@ export const analyzeDocument = async (uri: string, filename: string, mime: strin
               },
               {
                 type: "image_url",
-                image_url: { url: `data:${mime};base64,${base64}` }
+                image_url: { url: `data:${mime};base64,${activeBase64}` }
               }
             ]
           }
