@@ -258,8 +258,17 @@ export default function AddScreen() {
       if (data.currency) setCurrency(data.currency);
       if (data.folder) setFolder(data.folder);
       setResult(data.summary);
-    } catch (e) {
+    } catch (e: any) {
       console.warn("AI Analiz hatası:", e);
+      const errMsg = e.message || 'API anahtarı eksik veya geçersiz olabilir.';
+      if (Platform.OS === 'web') {
+        window.alert(`Yapay Zeka Analizi Başarısız:\n${errMsg}\n\nLütfen alanları (Ad, Tutar vb.) manuel doldurarak kaydetmeyi deneyin.`);
+      } else {
+        Alert.alert(
+          'Analiz Başarısız',
+          `Yapay Zeka analizi yapılamadı:\n${errMsg}\n\nLütfen alanları manuel doldurarak kaydedin.`
+        );
+      }
     } finally {
       setIsAnalyzing(false);
     }
@@ -284,7 +293,11 @@ export default function AddScreen() {
 
   const handleSave = async () => {
     if (!title || !amount) {
-      Alert.alert('Eksik Bilgi', `Lütfen ${getDynamicTitleLabel()} ve Tutar alanlarını doldurun.`);
+      if (Platform.OS === 'web') {
+        window.alert(`Eksik Bilgi:\nLütfen ${getDynamicTitleLabel()} ve Tutar alanlarını doldurun.`);
+      } else {
+        Alert.alert('Eksik Bilgi', `Lütfen ${getDynamicTitleLabel()} ve Tutar alanlarını doldurun.`);
+      }
       return;
     }
     setLoading(true);
